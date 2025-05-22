@@ -1,4 +1,8 @@
+HEAD
 # pythonerrors
+
+# Python Coursework
+fee6fa1 (Initial commit)
 
 
 
@@ -15,14 +19,22 @@ Already a pro? Just edit this README.md and make it your own. Want to make it ea
 
 ```
 cd existing_repo
+<<<<<<< HEAD
 git remote add origin https://csgitlab.reading.ac.uk/uq010160/pythonerrors.git
+=======
+git remote add origin https://csgitlab.reading.ac.uk/uq010160/python-coursework.git
+>>>>>>> fee6fa1 (Initial commit)
 git branch -M main
 git push -uf origin main
 ```
 
 ## Integrate with your tools
 
+<<<<<<< HEAD
 - [ ] [Set up project integrations](https://csgitlab.reading.ac.uk/uq010160/pythonerrors/-/settings/integrations)
+=======
+- [ ] [Set up project integrations](https://csgitlab.reading.ac.uk/uq010160/python-coursework/-/settings/integrations)
+>>>>>>> fee6fa1 (Initial commit)
 
 ## Collaborate with your team
 
