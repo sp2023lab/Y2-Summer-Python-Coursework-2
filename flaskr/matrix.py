@@ -76,7 +76,7 @@ def add_timing_patterns(matrix):
 def add_alignment_patterns(matrix, version):
     alignment_patterns = {
         1: [],
-        2: [(6, 18)],
+        2: [(6, 18), (18, 6)]
     }
 
     if version in alignment_patterns:

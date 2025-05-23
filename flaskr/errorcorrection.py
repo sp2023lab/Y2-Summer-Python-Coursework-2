@@ -1,7 +1,11 @@
 import reedsolo
 
 def reed_solomon_encode(data, level):
-    level_mapping = {'L': 7, 'M': 15, 'Q': 25, 'H': 30}  # Example mapping
+    level_mapping = {
+        'L1': 7,   # Version 1, ECC level L → 7 codewords
+        'L2': 10   # Version 2, ECC level L → 10 codewords
+    }
+
     if level not in level_mapping:
         raise ValueError(f"Invalid error correction level: {level}")
     
