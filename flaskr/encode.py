@@ -1,4 +1,4 @@
-def byte_mode_encode(data):
+def byte_mode_encode(data, version=1):
     char_count = len(data)
     char_count_bits = f'{char_count:08b}'
 
@@ -16,7 +16,7 @@ def byte_mode_encode(data):
     bits = encoded_data
     bits = '0100' + char_count_bits + bits
 
-    needed_bits = 152
+    needed_bits = 152 if version == 1 else 272
     total_bits = len(bits)
     if total_bits < needed_bits:
         bits += '0' * min(4, needed_bits - total_bits)

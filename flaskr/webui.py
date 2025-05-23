@@ -15,31 +15,38 @@ from base64 import b64encode
 
 bp = Blueprint('webui', __name__, url_prefix='/webui')
 
-@bp.route('/test')
+#@bp.route('/test')
 def test():
     return "Test route is working!"
 
 @bp.route('/', methods=['GET', 'POST'])
 def index():
     qr_code_url = None  # Initialize the QR code URL as None
-
+    version = int(request.form.get("version", 1))  # default to version 1
     if request.method == 'POST':
         data = request.form.get('data')  # Get the data from the form
         if not data:
             flash("No data provided!", "error")
-        elif len(data) > 17:
-            flash("Data must be 17 characters or fewer!", "error")
+        elif len(data) > (19 if version == 1 else 34):
+            flash(f"Data must be {19 if version == 1 else 34} characters or fewer for version {version}!", "error")
         else:
-            qr_code_url = f"data:image/png;base64,{generate_qr(data)}"  # Generate the QR code
+            qr_code_url = f"data:image/png;base64,{generate_qr(data, version)}" # Generate the QR code
 
     return render_template('webui/index.html', qr_code_url=qr_code_url)
 
-def generate_qr(data):
-    encoded_data = encode.byte_mode_encode(data)
+def generate_qr(data, version):
+
+    matrix_size = 21 if version == 1 else 25
+    max_data_bytes = 19 if version == 1 else 34
+    ecc_level = 'L'
+
+    if len(data) > max_data_bytes:
+        raise ValueError(f"Data exceeds limit for QR version {version}")
+
+    encoded_data = encode.byte_mode_encode(data, version)
     img_str = None
 
-    error_correction_codewords = errorcorrection.reed_solomon_encode(encoded_data, 'L')
-    matrix_size = 21  # QR Code Version 1
+    error_correction_codewords = errorcorrection.reed_solomon_encode(encoded_data, f'{ecc_level}{version}')
 
     base_matrix = matrix.create_matrix(matrix_size, matrix_size)
     base_matrix = matrix.reserve_matrix(base_matrix)
@@ -47,7 +54,7 @@ def generate_qr(data):
     base_matrix = matrix.add_finder_patterns(base_matrix)
     base_matrix = matrix.add_separators(base_matrix)
     base_matrix = matrix.add_timing_patterns(base_matrix)
-    base_matrix = matrix.add_alignment_patterns(base_matrix, version=1)
+    base_matrix = matrix.add_alignment_patterns(base_matrix, version=version)
 
     # --------- Apply All Masks & Select Best One ---------
     best_score = float('inf')
