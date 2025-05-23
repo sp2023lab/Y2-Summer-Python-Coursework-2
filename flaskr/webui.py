@@ -11,6 +11,7 @@ from . import errorcorrection
 from . import matrix
 from io import BytesIO
 from base64 import b64encode
+import os
 
 
 bp = Blueprint('webui', __name__, url_prefix='/webui')
@@ -50,11 +51,14 @@ def generate_qr(data, version):
 
     base_matrix = matrix.create_matrix(matrix_size, matrix_size)
     base_matrix = matrix.reserve_matrix(base_matrix)
+    save_stage_image(base_matrix, "stage1_reserved.png")
+
     base_matrix = matrix.add_data(base_matrix, encoded_data, error_correction_codewords)
     base_matrix = matrix.add_finder_patterns(base_matrix)
     base_matrix = matrix.add_separators(base_matrix)
     base_matrix = matrix.add_timing_patterns(base_matrix)
     base_matrix = matrix.add_alignment_patterns(base_matrix, version=version)
+    save_stage_image(base_matrix, "stage2_patterns_data.png")
 
     # --------- Apply All Masks & Select Best One ---------
     best_score = float('inf')
@@ -70,9 +74,14 @@ def generate_qr(data, version):
             best_score = score
             best_mask_id = mask_id
             best_matrix = masked_matrix
-
+    
+    save_stage_image(best_matrix, "stage3_masked.png")
+    
+    
     # Add format info using best_mask_id
     final_matrix = matrix.add_format_information(best_matrix, best_mask_id)
+    save_stage_image(final_matrix, "stage4_final.png")
+
 
     # --------- Convert Matrix to Image ---------
     img = Image.new('RGB', (matrix_size, matrix_size), (255, 255, 255))  # White background
@@ -95,3 +104,29 @@ def generate_qr(data, version):
     img_str = b64encode(buffered.getvalue()).decode()
 
     return img_str
+
+def save_stage_image(matrix, filename):
+    size = len(matrix)
+    img = Image.new('RGB', (size, size), (255, 255, 255))
+    pixels = img.load()
+
+    for row in range(size):
+        for col in range(size):
+            val = matrix[row][col]
+            if val == 1:
+                pixels[col, row] = (0, 0, 0)
+            elif val == 2:
+                pixels[col, row] = (255, 0, 0)
+            elif val == 3:
+                pixels[col, row] = (0, 0, 255)
+            elif val == 4:
+                pixels[col, row] = (255, 255, 0)
+
+    img = img.resize((300, 300), Image.NEAREST)
+
+    # ✅ Use absolute path to "static/" one level up
+    static_path = os.path.join(os.path.dirname(__file__), 'static', filename)
+    static_path = os.path.abspath(static_path)
+
+    os.makedirs(os.path.dirname(static_path), exist_ok=True)
+    img.save(static_path)
