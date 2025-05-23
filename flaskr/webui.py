@@ -35,65 +35,56 @@ def index():
     return render_template('webui/index.html', qr_code_url=qr_code_url)
 
 def generate_qr(data):
-
     encoded_data = encode.byte_mode_encode(data)
     img_str = None
 
     error_correction_codewords = errorcorrection.reed_solomon_encode(encoded_data, 'L')
+    matrix_size = 21  # QR Code Version 1
 
-    matrix_size = 21  # Example size for QR code version 1
-    
-    matrix_data = matrix.create_matrix(matrix_size, matrix_size)
+    base_matrix = matrix.create_matrix(matrix_size, matrix_size)
+    base_matrix = matrix.reserve_matrix(base_matrix)
+    base_matrix = matrix.add_data(base_matrix, encoded_data, error_correction_codewords)
+    base_matrix = matrix.add_finder_patterns(base_matrix)
+    base_matrix = matrix.add_separators(base_matrix)
+    base_matrix = matrix.add_timing_patterns(base_matrix)
+    base_matrix = matrix.add_alignment_patterns(base_matrix, version=1)
 
-    matrix_data = matrix.reserve_matrix(matrix_data)
-    matrix_data = matrix.add_data(matrix_data, encoded_data, error_correction_codewords)
+    # --------- Apply All Masks & Select Best One ---------
+    best_score = float('inf')
+    best_matrix = None
+    best_mask_id = 0
 
+    for mask_id in range(8):
+        mask_fn = matrix.get_mask_function(mask_id)
+        masked_matrix = matrix.apply_mask(base_matrix, mask_fn)
+        score = matrix.calculate_penalty(masked_matrix)
 
+        if score < best_score:
+            best_score = score
+            best_mask_id = mask_id
+            best_matrix = masked_matrix
 
-    matrix_data = matrix.add_finder_patterns(matrix_data)
-    matrix_data = matrix.add_separators(matrix_data)
-    matrix_data = matrix.add_timing_patterns(matrix_data)
-    matrix_data = matrix.add_alignment_patterns(matrix_data, version=1)
-    matrix_data = matrix.add_format_information(matrix_data)
-    
+    # Add format info using best_mask_id
+    final_matrix = matrix.add_format_information(best_matrix, best_mask_id)
 
-
-    img = Image.new('RGB', (matrix_size, matrix_size), (255, 255, 255))  # Create a new image with white background
+    # --------- Convert Matrix to Image ---------
+    img = Image.new('RGB', (matrix_size, matrix_size), (255, 255, 255))  # White background
     pixels = img.load()
     for row in range(matrix_size):
         for col in range(matrix_size):
-            if matrix_data[row][col] == 1:
-                pixels[col, row] = (0, 0, 0)  # Set pixel to black
-            elif matrix_data[row][col] == 2:
-                pixels[col, row] = (255, 0, 0)  # Set pixel to red
-            elif matrix_data[row][col] == 3:
-                pixels[col, row] = (0, 0, 255) # Set pixel to blue
-            elif matrix_data[row][col] == 4:
-                pixels[col, row] = (255, 255, 0)
+            if final_matrix[row][col] == 1:
+                pixels[col, row] = (0, 0, 0)      # Black
+            elif final_matrix[row][col] == 2:
+                pixels[col, row] = (255, 0, 0)    # Red (Reserved)
+            elif final_matrix[row][col] == 3:
+                pixels[col, row] = (0, 0, 255)    # Blue (Timing)
+            elif final_matrix[row][col] == 4:
+                pixels[col, row] = (255, 255, 0)  # Yellow (Debug)
 
-    img = img.resize((300, 300), Image.NEAREST)  # Resize the image for better visibility
+    img = img.resize((300, 300), Image.NEAREST)
 
     buffered = BytesIO()
     img.save(buffered, format="PNG")
     img_str = b64encode(buffered.getvalue()).decode()
-
-
-#    import qrcode
-#    from io import BytesIO
-#    from base64 import b64encode
-
-#    qr = qrcode.QRCode(
-#        version=1,
-#        error_correction=qrcode.constants.ERROR_CORRECT_L,
-#        box_size=10,
-#        border=4,
-#    )
-#    qr.add_data(data)
-#    qr.make(fit=True)
-#
-#    img = qr.make_image(fill_color="black", back_color="white")
-#    buffered = BytesIO()
-#    img.save(buffered, format="PNG")
-#    img_str = b64encode(buffered.getvalue()).decode()
 
     return img_str
