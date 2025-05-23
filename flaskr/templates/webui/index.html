@@ -21,6 +21,23 @@
     
     {% if qr_code_url %}
         <h3>Generated QR Code:</h3>
-        <img src="{{ qr_code_url }}" alt="QR Code">
+        <img src="{{ qr_code_url }}" alt="Final QR Code">
+
+        <h3>Step-by-Step Construction:</h3>
+
+        <div>
+            <p><strong>Stage 1: Reserved Matrix</strong></p>
+            <img src="{{ url_for('static', filename='stage1_reserved.png') }}" alt="Reserved Matrix">
+
+            <p><strong>Stage 2: With Data + Patterns</strong></p>
+            <img src="{{ url_for('static', filename='stage2_patterns_data.png') }}" alt="Patterns and Data">
+
+            <p><strong>Stage 3: After Masking</strong></p>
+            <img src="{{ url_for('static', filename='stage3_masked.png') }}" alt="Masked Matrix">
+
+            <p><strong>Stage 4: Final with Format Info</strong></p>
+            <img src="{{ url_for('static', filename='stage4_final.png') }}" alt="Final Matrix with Format">
+        </div>
     {% endif %}
+
 {% endblock %}
