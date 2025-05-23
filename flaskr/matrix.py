@@ -86,10 +86,119 @@ def add_alignment_patterns(matrix, version):
 
     return matrix
 
-def add_format_information(matrix):
+def get_mask_function(mask_id):
+    return [
+        lambda i, j: (i + j) % 2 == 0,
+        lambda i, j: i % 2 == 0,
+        lambda i, j: j % 3 == 0,
+        lambda i, j: (i + j) % 3 == 0,
+        lambda i, j: (i // 2 + j // 3) % 2 == 0,
+        lambda i, j: ((i * j) % 2 + (i * j) % 3) == 0,
+        lambda i, j: (((i * j) % 2 + (i * j) % 3) % 2) == 0,
+        lambda i, j: (((i + j) % 2 + (i * j) % 3) % 2) == 0,
+    ][mask_id]
+
+def apply_mask(matrix, mask_fn):
+    masked = [row.copy() for row in matrix]
+    size = len(matrix)
+
+    for i in range(size):
+        for j in range(size):
+            if should_mask(i, j):
+                if mask_fn(i, j):
+                    masked[i][j] ^= 1
+
+    return masked
+
+def should_mask(i, j):
+    # Reserved finder/separator/alignment/timing areas
+    if (i < 9 and j < 9) or (i < 9 and j >= 21 - 8) or (i >= 21 - 8 and j < 9):
+        return False
+    if i == 6 or j == 6:
+        return False
+    return True
+
+def penalty_rule1(matrix):
+    penalty = 0
+    size = len(matrix)
+
+    for row in matrix:
+        count = 1
+        for i in range(1, size):
+            if row[i] == row[i - 1]:
+                count += 1
+            else:
+                if count >= 5:
+                    penalty += 3 + (count - 5)
+                count = 1
+        if count >= 5:
+            penalty += 3 + (count - 5)
+
+    for col in zip(*matrix):
+        count = 1
+        for i in range(1, size):
+            if col[i] == col[i - 1]:
+                count += 1
+            else:
+                if count >= 5:
+                    penalty += 3 + (count - 5)
+                count = 1
+        if count >= 5:
+            penalty += 3 + (count - 5)
+
+    return penalty
+
+def penalty_rule2(matrix):
+    penalty = 0
+    size = len(matrix)
+
+    for i in range(size - 1):
+        for j in range(size - 1):
+            if matrix[i][j] == matrix[i][j+1] == matrix[i+1][j] == matrix[i+1][j+1]:
+                penalty += 3
+
+    return penalty
+
+def penalty_rule3(matrix):
+    penalty = 0
+    size = len(matrix)
+    pattern = [1, 0, 1, 1, 1, 0, 1]
+
+    for row in matrix:
+        for i in range(size - 6):
+            if row[i:i+7] == pattern:
+                if i >= 4 and row[i-4:i] == [0, 0, 0, 0] or i+11 <= size and row[i+7:i+11] == [0, 0, 0, 0]:
+                    penalty += 40
+
+    for j in range(size):
+        col = [matrix[i][j] for i in range(size)]
+        for i in range(size - 6):
+            if col[i:i+7] == pattern:
+                if i >= 4 and col[i-4:i] == [0, 0, 0, 0] or i+11 <= size and col[i+7:i+11] == [0, 0, 0, 0]:
+                    penalty += 40
+
+    return penalty
+
+def penalty_rule4(matrix):
+    dark = sum(cell for row in matrix for cell in row if cell == 1)
+    total = len(matrix) ** 2
+    ratio = dark / total * 100
+    k = abs(ratio - 50) // 5
+    return int(k) * 10
+
+
+def calculate_penalty(matrix):
+    return (
+        penalty_rule1(matrix) +
+        penalty_rule2(matrix) +
+        penalty_rule3(matrix) +
+        penalty_rule4(matrix)
+    )
+
+def add_format_information(matrix, mask_id):
     rows = len(matrix)
     cols = len(matrix[0])
-    mask = '000'
+    mask = format(mask_id, '03b')
     correction_level = '01'
 
     format_info = f'{correction_level}{mask}'
@@ -146,17 +255,6 @@ def add_format_information(matrix):
             print(f"Adding format info indexd: {i} at ({i - 6}, 8)")
             print(f"info: {format_info_inverse[i]}")
 
-        
-
-
-  
-
-
-
-
-
-
-    
 
     return matrix
 
