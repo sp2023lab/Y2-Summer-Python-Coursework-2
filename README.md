@@ -18,18 +18,6 @@ This project implements a fully interactive, web-based QR code generator using P
 
 ---
 
-## Screenshots
-
-### Final Output Example:
-![Final QR Code](static/stage4_final.png)
-
-### Step-by-Step Views:
-- **Reserved Matrix** ![Reserved](static/stage1_reserved.png)
-- **With Data + Patterns** ![Data](static/stage2_patterns_data.png)
-- **After Masking** ![Mask](static/stage3_masked.png)
-
----
-
 ## Getting Started
 
 ### Requirements
