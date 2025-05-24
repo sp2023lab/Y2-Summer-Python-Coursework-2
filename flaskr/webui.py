@@ -22,20 +22,24 @@ def test():
 
 @bp.route('/', methods=['GET', 'POST'])
 def index():
-    qr_code_url = None  # Initialize the QR code URL as None
+    qr_code_url = None    
+    
     version = int(request.form.get("version", 1))  # default to version 1
     if request.method == 'POST':
         data = request.form.get('data')  # Get the data from the form
+        fg_color = request.form.get("fg", "#000000")
+        bg_color = request.form.get("bg", "#ffffff")
+
         if not data:
             flash("No data provided!", "error")
         elif len(data) > (19 if version == 1 else 34):
             flash(f"Data must be {19 if version == 1 else 34} characters or fewer for version {version}!", "error")
         else:
-            qr_code_url = f"data:image/png;base64,{generate_qr(data, version)}" # Generate the QR code
+            qr_code_url = f"data:image/png;base64,{generate_qr(data, version, fg_color, bg_color)}" # Generate the QR code
 
     return render_template('webui/index.html', qr_code_url=qr_code_url)
 
-def generate_qr(data, version):
+def generate_qr(data, version, fg_color, bg_color):
 
     matrix_size = 21 if version == 1 else 25
     max_data_bytes = 19 if version == 1 else 34
@@ -84,12 +88,18 @@ def generate_qr(data, version):
 
 
     # --------- Convert Matrix to Image ---------
-    img = Image.new('RGB', (matrix_size, matrix_size), (255, 255, 255))  # White background
+
+    bg_rgb = tuple(int(bg_color[i:i+2], 16) for i in (1, 3, 5))
+    fg_rgb = tuple(int(fg_color[i:i+2], 16) for i in (1, 3, 5))
+
+    img = Image.new('RGB', (matrix_size, matrix_size), bg_rgb)
+
+
     pixels = img.load()
     for row in range(matrix_size):
         for col in range(matrix_size):
             if final_matrix[row][col] == 1:
-                pixels[col, row] = (0, 0, 0)      # Black
+                pixels[col, row] = fg_rgb      # Black
             elif final_matrix[row][col] == 2:
                 pixels[col, row] = (255, 0, 0)    # Red (Reserved)
             elif final_matrix[row][col] == 3:
