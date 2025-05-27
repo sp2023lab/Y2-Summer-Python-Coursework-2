@@ -195,68 +195,37 @@ def calculate_penalty(matrix):
         penalty_rule4(matrix)
     )
 
-def add_format_information(matrix, mask_id):
-    rows = len(matrix)
-    cols = len(matrix[0])
-    mask = format(mask_id, '03b')
-    correction_level = '01'
+def add_format_information(matrix, mask_id=0):
+    # ECC Level: L (01), Mask: 000
+    # Final masked format bits: 111011111000100
+    format_bits = [1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0]
+    size = len(matrix)
 
-    format_info = f'{correction_level}{mask}'
-    format_info = list(map(int, format_info))
+    # Horizontal format info (top-left)
+    for i in range(6):
+        matrix[8][i] = format_bits[i]
+    matrix[8][7] = format_bits[6]
+    matrix[8][8] = format_bits[7]
+    matrix[7][8] = format_bits[8]
 
-    rs = reedsolo.RSCodec(10)
-    try:
-        # Convert bit data to bytes
-        byte_data = bytearray()
-        for i in range(0, len(format_info), 8):
-            byte = int(''.join(map(str, format_info[i:i+8])), 2)
-            byte_data.append(byte)
-        
-        encoded_data = rs.encode(byte_data)
-        # Extract error correction codewords
-        error_correction_codewords = encoded_data[10:]
-        # Convert to binary string
-        binary_string = ''.join(format(byte, '08b') for byte in error_correction_codewords)
-        binary_list = [int(bit) for bit in binary_string]
-    except reedsolo.ReedSolomonError as e:
-        print(f"Error encoding data: {e}")
+    # Vertical format info (top-left)
+    for i in range(6):
+        matrix[i][8] = format_bits[14 - i]
 
-    # Append the error correction bits to the format information
-    format_info.extend(binary_list)
-
-    
-    #format_info = list(map(str, "111011111000100"))
-    format_info_inverse = format_info[::-1]
-
-    print(f"Format info: {format_info}")
-
-    matrix[rows - 8][8] = 1 # dark module
-
-    for i in range(7):
-        matrix[rows - 1 - i][8] = int(format_info[i])  # Vertical format info (bottom-left)
-
-        if i < 6:
-            matrix[8][i] = int(format_info[i])  # Horizontal format info (top-left)
-        else:
-            matrix[8][i + 1] = int(format_info[i])  # Horizontal format info (top-left)
-
-        print(f"Adding format info index: {i} at ({rows - 1 - i}, 8)")
-
+    # Top-right horizontal
     for i in range(8):
-        matrix[8][cols - 1 - i] = int(format_info_inverse[i])  # Horizontal format info (top-right)
+        matrix[8][size - 1 - i] = format_bits[i]
 
+    # Bottom-left vertical
+    for i in range(7):
+        matrix[size - 1 - i][8] = format_bits[8 + i]
 
-        if i < 6:
-            matrix[i][8] = int(format_info_inverse[i])
-            print(f"Adding format info indexd: {i} at ({i - 7}, 8)")
-            print(f"info: {format_info_inverse[i]}")
-        else:
-            matrix[i + 1][8] = int(format_info_inverse[i])
-            print(f"Adding format info indexd: {i} at ({i - 6}, 8)")
-            print(f"info: {format_info_inverse[i]}")
-
+    # Dark module
+    matrix[size - 8][8] = 1
 
     return matrix
+
+
 
 def add_data_mask(matrix):
     rows = len(matrix)
@@ -286,144 +255,29 @@ def add_data_mask(matrix):
 #0100000001010110101101101110011011110111011101101110000011101100000100011110110000010001111011000001000111101100000100011110110000010001111011000001000111101011100100000100100010100101001110111001101100010001
 #0100000001010110101101101110011011110111011101101110000011101100000100011110110000010001111011000001000111101100000100011110110000010001111011000001000111101011100100000100100010100101001110111001101100010001
 
-def add_data(matrix, data, error_correction_codewords):
+def add_data(matrix, data, ecc):
+    bits = data + ecc
+    size = len(matrix)
+    idx = 0
 
-    rows = len(matrix)
-    cols = len(matrix[0])
+    def is_reserved(i, j):
+        return matrix[i][j] in (2, 3) or (i == 6 or j == 6) or (i == 8 or j == 8)
 
-    timeout = 0
+    j = size - 1
+    upward = True
 
-    data_bits = data + error_correction_codewords
-    data_index = 0
-
-    vertical = rows - 1
-    horizontal = cols - 1
-
-    data_bits_text = ''.join(map(str, data_bits))
-    print(f"Data: {data_bits_text}")
-
-    while data_index < len(data_bits):
-        if timeout > 300:
-            print("Timeout reached while adding data")
-            break
-        timeout += 1
-
-        print("Moving UP")
-        while (True):
-            if data_index == 0:
-                print(f"vertical: {vertical}, horizontal: {horizontal}, data_index: {data_index}, data: {data_bits[data_index]}")
-                matrix[vertical][horizontal] = data_bits[data_index]
-                data_index += 1
-            
-
-            horizontal -= 1
-
-            if matrix[vertical][horizontal] == 3:
-                horizontal -= 1
-                print("hit vertical timing pattern")
-                print(f"vertical: {vertical}, horizontal: {horizontal}, data_index: {data_index}, data: {data_bits[data_index]}")
-                matrix[vertical][horizontal] = data_bits[data_index]
-                data_index += 1
-
-            if horizontal < 0:
-                break
-
-            if data_index >= len(data_bits):
-                break
-            
-            print(f"vertical: {vertical}, horizontal: {horizontal}, data_index: {data_index}, data: {data_bits[data_index]}")
-            matrix[vertical][horizontal] = data_bits[data_index]
-            data_index += 1
-
-            if data_index >= len(data_bits):
-                break
-
-            vertical -= 1
-            horizontal += 1
-
-            if vertical < 0 or matrix[vertical][horizontal] == 2:
-                vertical += 1
-                horizontal -= 2
-
-                if matrix[vertical][horizontal] == 3:
-                    horizontal -= 1
-                    print("hit vertical timing pattern")
-
-                print(f"vertical: {vertical}, horizontal: {horizontal}, data_index: {data_index}, data: {data_bits[data_index]}")
-                matrix[vertical][horizontal] = data_bits[data_index]
-                data_index += 1
-                break
-            elif matrix[vertical][horizontal] == 3:
-                vertical -= 1
-                print(f"vertical: {vertical}, horizontal: {horizontal}, data_index: {data_index}, data: {data_bits[data_index]}")
-                matrix[vertical][horizontal] = data_bits[data_index]
-                data_index += 1
-            else:
-                print(f"vertical: {vertical}, horizontal: {horizontal}, data_index: {data_index}, data: {data_bits[data_index]}")
-                matrix[vertical][horizontal] = data_bits[data_index]
-                data_index += 1
-
-        print("Moving DOWN")
-        while (True):
-            if data_index >= len(data_bits):
-                break
-
-            horizontal -= 1
-
-            if matrix[vertical][horizontal] == 3:
-                horizontal -= 1
-                print("hit vertical timing pattern")
-                print(f"vertical: {vertical}, horizontal: {horizontal}, data_index: {data_index}, data: {data_bits[data_index]}")
-                matrix[vertical][horizontal] = data_bits[data_index]
-                data_index += 1
-
-            if horizontal < 0:
-                break
-
-            print(f"vertical: {vertical}, horizontal: {horizontal}, data_index: {data_index}, data: {data_bits[data_index]}")
-            matrix[vertical][horizontal] = data_bits[data_index]
-            data_index += 1
-
-            if data_index >= len(data_bits):
-                break
-
-            vertical += 1
-            horizontal += 1
-            
-
-            if vertical >= rows or matrix[vertical][horizontal] == 2:
-                vertical -= 1
-                horizontal -= 2
-                while matrix[vertical][horizontal] == 2:
-                    vertical -= 1
-
-                if matrix[vertical][horizontal] == 3:
-                    horizontal -= 1
-                    print("hit vertical timing pattern")
-
-                print(f"vertical: {vertical}, horizontal: {horizontal}, data_index: {data_index}, data: {data_bits[data_index]}")
-                matrix[vertical][horizontal] = data_bits[data_index]
-                data_index += 1
-                break
-            elif matrix[vertical][horizontal] == 3:
-                vertical += 1
-                print(f"vertical: {vertical}, horizontal: {horizontal}, data_index: {data_index}, data: {data_bits[data_index]}")
-                matrix[vertical][horizontal] = data_bits[data_index]
-                data_index += 1
-            else:
-                print(f"vertical: {vertical}, horizontal: {horizontal}, data_index: {data_index}, data: {data_bits[data_index]}")
-                matrix[vertical][horizontal] = data_bits[data_index]
-                data_index += 1
-
-        if horizontal < 0:
-            break
-
-        if data_index >= len(data_bits):
-            break
-
-
-
-    matrix = add_data_mask(matrix)
-
+    while j > 0:
+        if j == 6:
+            j -= 1  # Skip vertical timing
+        row_range = range(size - 1, -1, -1) if upward else range(size)
+        for i in row_range:
+            for dj in [0, -1]:
+                col = j + dj
+                if col >= 0 and not is_reserved(i, col):
+                    if idx < len(bits):
+                        matrix[i][col] = bits[idx]
+                        idx += 1
+        j -= 2
+        upward = not upward
 
     return matrix

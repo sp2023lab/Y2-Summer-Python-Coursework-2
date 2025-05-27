@@ -6,6 +6,7 @@
 
 {% block content %}
     <h2>Generate QR Code</h2>
+    <p>QR codes may redirect to external content. Please ensure you trust the destination. Do not share sensitive data.</p>
     <form method="POST" action="{{ url_for('webui.index') }}">
         <label for="data">Data:</label>
         <input type="text" id="data" name="data" required pattern="[a-zA-Z0-9]+">

@@ -53,6 +53,8 @@ def generate_qr(data, version, fg_color, bg_color):
 
     error_correction_codewords = errorcorrection.reed_solomon_encode(encoded_data, f'{ecc_level}{version}')
 
+    print(''.join(str(b) for b in encoded_data + error_correction_codewords))
+
     base_matrix = matrix.create_matrix(matrix_size, matrix_size)
     base_matrix = matrix.reserve_matrix(base_matrix)
     save_stage_image(base_matrix, "stage1_reserved.png")
@@ -84,6 +86,14 @@ def generate_qr(data, version, fg_color, bg_color):
     
     # Add format info using best_mask_id
     final_matrix = matrix.add_format_information(best_matrix, best_mask_id)
+
+    # --------- Clean matrix of debug values ---------
+    for row in range(len(final_matrix)):
+        for col in range(len(final_matrix[0])):
+            if final_matrix[row][col] not in [0, 1]:
+                final_matrix[row][col] = 0
+
+
     save_stage_image(final_matrix, "stage4_final.png")
 
 
@@ -98,16 +108,17 @@ def generate_qr(data, version, fg_color, bg_color):
     pixels = img.load()
     for row in range(matrix_size):
         for col in range(matrix_size):
-            if final_matrix[row][col] == 1:
-                pixels[col, row] = fg_rgb      # Black
-            elif final_matrix[row][col] == 2:
-                pixels[col, row] = (255, 0, 0)    # Red (Reserved)
-            elif final_matrix[row][col] == 3:
-                pixels[col, row] = (0, 0, 255)    # Blue (Timing)
-            elif final_matrix[row][col] == 4:
-                pixels[col, row] = (255, 255, 0)  # Yellow (Debug)
+            pixels[col, row] = fg_rgb if final_matrix[row][col] == 1 else bg_rgb
+            
+    # Clean all debug markings (2 = reserved, 3 = timing, 4 = debug)
+    for row in range(matrix_size):
+        for col in range(matrix_size):
+            if final_matrix[row][col] > 1:
+                final_matrix[row][col] = 0  # Or set appropriately to 0 or 1 if known
+
 
     img = img.resize((300, 300), Image.NEAREST)
+    
 
     buffered = BytesIO()
     img.save(buffered, format="PNG")
