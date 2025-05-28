@@ -70,17 +70,23 @@ def generate_qr(data, version, fg_color, bg_color):
     best_score = float('inf')
     best_matrix = None
     best_mask_id = 0
+    integer_list = []
 
     for mask_id in range(8):
         mask_fn = matrix.get_mask_function(mask_id)
         masked_matrix = matrix.apply_mask(base_matrix, mask_fn)
+
+        print(f"Applying mask ID {mask_id}...")
         score = matrix.calculate_penalty(masked_matrix)
+        integer_list.append(score)
+        print(f"Mask ID {mask_id} score: {score}")
 
         if score < best_score:
             best_score = score
             best_mask_id = mask_id
             best_matrix = masked_matrix
     
+    print(f"Penalty list: {integer_list}")
     save_stage_image(best_matrix, "stage3_masked.png")
     
     
@@ -145,7 +151,7 @@ def save_stage_image(matrix, filename):
 
     img = img.resize((300, 300), Image.NEAREST)
 
-    # ✅ Use absolute path to "static/" one level up
+    # Use absolute path to "static/" one level up
     static_path = os.path.join(os.path.dirname(__file__), 'static', filename)
     static_path = os.path.abspath(static_path)
 

@@ -145,7 +145,7 @@ def penalty_rule1(matrix):
                 count = 1
         if count >= 5:
             penalty += 3 + (count - 5)
-
+    print(f'1st penalty: {penalty}')
     return penalty
 
 def penalty_rule2(matrix):
@@ -157,6 +157,7 @@ def penalty_rule2(matrix):
             if matrix[i][j] == matrix[i][j+1] == matrix[i+1][j] == matrix[i+1][j+1]:
                 penalty += 3
 
+    print(f'2nd penalty: {penalty}')
     return penalty
 
 def penalty_rule3(matrix):
@@ -167,16 +168,17 @@ def penalty_rule3(matrix):
     for row in matrix:
         for i in range(size - 6):
             if row[i:i+7] == pattern:
-                if i >= 4 and row[i-4:i] == [0, 0, 0, 0] or i+11 <= size and row[i+7:i+11] == [0, 0, 0, 0]:
+                if (i >= 4 and row[i-4:i] == [0, 0, 0, 0]) or (i+11 <= size and row[i+7:i+11] == [0, 0, 0, 0]):
                     penalty += 40
 
     for j in range(size):
         col = [matrix[i][j] for i in range(size)]
         for i in range(size - 6):
             if col[i:i+7] == pattern:
-                if i >= 4 and col[i-4:i] == [0, 0, 0, 0] or i+11 <= size and col[i+7:i+11] == [0, 0, 0, 0]:
+                if (i >= 4 and row[i-4:i] == [0, 0, 0, 0]) or (i+11 <= size and row[i+7:i+11] == [0, 0, 0, 0]):
                     penalty += 40
 
+    print(f'3rd penalty: {penalty}')
     return penalty
 
 def penalty_rule4(matrix):
@@ -184,10 +186,13 @@ def penalty_rule4(matrix):
     total = len(matrix) ** 2
     ratio = dark / total * 100
     k = abs(ratio - 50) // 5
+
+    print(f'4th penalty: {int(k) * 10}')
     return int(k) * 10
 
 
 def calculate_penalty(matrix):
+    print(f'Total penalties are: {penalty_rule1(matrix) + penalty_rule2(matrix) + penalty_rule3(matrix) + penalty_rule4(matrix)}')
     return (
         penalty_rule1(matrix) +
         penalty_rule2(matrix) +
@@ -261,7 +266,7 @@ def add_data(matrix, data, ecc):
     idx = 0
 
     def is_reserved(i, j):
-        return matrix[i][j] in (2, 3) or (i == 6 or j == 6) or (i == 8 or j == 8)
+        return matrix[i][j] in (2, 3)
 
     j = size - 1
     upward = True
