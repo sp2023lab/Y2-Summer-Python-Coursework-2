@@ -1,5 +1,3 @@
-import reedsolo
-
 def create_matrix(rows, cols):
     matrix = [[0 for _ in range(cols)] for _ in range(rows)]
 
@@ -9,7 +7,7 @@ def create_matrix(rows, cols):
 
     return matrix
 
-def reserve_matrix(matrix):
+def reserve_matrix(matrix, version):
     rows = len(matrix)
     cols = len(matrix[0])
 
@@ -18,6 +16,8 @@ def reserve_matrix(matrix):
             if (i < 9 and j < 9) or (i < 9 and j >= cols - 8) or (i >= rows - 8 and j < 9):
                 matrix[i][j] = 2
             elif (i == 6) or (j == 6):
+                matrix[i][j] = 3
+            elif version == 2 and ((i >= rows - 8) and (i <= rows - 4) and (j >= cols -8) and (j <= cols - 4)):
                 matrix[i][j] = 3
 
     return matrix
@@ -74,15 +74,20 @@ def add_timing_patterns(matrix):
     return matrix
 
 def add_alignment_patterns(matrix, version):
-    alignment_patterns = {
-        1: [],
-        2: [(6, 18), (18, 6)]
-    }
+    if version < 2:
+        return matrix
+    finder_pattern = [
+        [1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 1],
+        [1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1]
+    ]
 
-    if version in alignment_patterns:
-        for pattern in alignment_patterns[version]:
-            row, col = pattern
-            matrix[row][col] = 1
+    # Bottom-right corner
+    for i in range(5):
+        for j in range(5):
+            matrix[-(i + 4)][j - 8] = finder_pattern[i][j]
 
     return matrix
 
@@ -98,24 +103,29 @@ def get_mask_function(mask_id):
         lambda i, j: (((i + j) % 2 + (i * j) % 3) % 2) == 0,
     ][mask_id]
 
-def apply_mask(matrix, mask_fn):
+def apply_mask(matrix, mask_fn, version):
     masked = [row.copy() for row in matrix]
-    size = len(matrix)
+    rows = len(matrix)
+    cols = len(matrix[0])
 
-    for i in range(size):
-        for j in range(size):
-            if should_mask(i, j):
+
+    for i in range(rows):
+        for j in range(cols):
+            if should_mask(i, j, rows, cols, version):
                 if mask_fn(i, j):
                     masked[i][j] ^= 1
 
     return masked
 
-def should_mask(i, j):
+def should_mask(i, j, rows, cols, version):
     # Reserved finder/separator/alignment/timing areas
     if (i < 9 and j < 9) or (i < 9 and j >= 21 - 8) or (i >= 21 - 8 and j < 9):
         return False
     if i == 6 or j == 6:
         return False
+    if version == 2 and (i >= rows - 8) and (i <= rows - 4) and (j >= cols -8) and (j <= cols - 4):
+        return False
+    
     return True
 
 def penalty_rule1(matrix):
@@ -145,6 +155,8 @@ def penalty_rule1(matrix):
                 count = 1
         if count >= 5:
             penalty += 3 + (count - 5)
+
+            
     print(f'1st penalty: {penalty}')
     return penalty
 
@@ -169,6 +181,7 @@ def penalty_rule3(matrix):
         for i in range(size - 6):
             if row[i:i+7] == pattern:
                 if (i >= 4 and row[i-4:i] == [0, 0, 0, 0]) or (i+11 <= size and row[i+7:i+11] == [0, 0, 0, 0]):
+
                     penalty += 40
 
     for j in range(size):
@@ -246,19 +259,6 @@ def add_data_mask(matrix):
                 matrix[i][j] = 1 - matrix[i][j]
 
     return matrix
-
-
-
-
-# The data is placed in a zigzag pattern starting from the bottom right corner of the matrix
-# to go up
-# go left one, then up and right one and repeat until top is reached
-# if top is reached, go left twice and down one, then place data, go left one and start going down diagonally
-# to go down
-# go left one, then down and right one and repeat until bottom is reached
-# if bottom is reached, go left twice and up one, then place data, go left one more and start going up diagonally again
-#0100000001010110101101101110011011110111011101101110000011101100000100011110110000010001111011000001000111101100000100011110110000010001111011000001000111101011100100000100100010100101001110111001101100010001
-#0100000001010110101101101110011011110111011101101110000011101100000100011110110000010001111011000001000111101100000100011110110000010001111011000001000111101011100100000100100010100101001110111001101100010001
 
 def add_data(matrix, data, ecc):
     bits = data + ecc

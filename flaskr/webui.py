@@ -24,18 +24,23 @@ def test():
 def index():
     qr_code_url = None    
     
-    version = int(request.form.get("version", 1))  # default to version 1
-    if request.method == 'POST':
-        data = request.form.get('data')  # Get the data from the form
-        fg_color = request.form.get("fg", "#000000")
-        bg_color = request.form.get("bg", "#ffffff")
+    version = None
+    data = request.form.get('data')
+    fg_color = request.form.get("fg", "#000000")
+    bg_color = request.form.get("bg", "#ffffff")
 
+    if request.method == 'POST':
         if not data:
             flash("No data provided!", "error")
-        elif len(data) > (19 if version == 1 else 34):
-            flash(f"Data must be {19 if version == 1 else 34} characters or fewer for version {version}!", "error")
+        elif len(data) <= 19:
+            version = 1
+        elif len(data) <= 34:
+            version = 2
         else:
-            qr_code_url = f"data:image/png;base64,{generate_qr(data, version, fg_color, bg_color)}" # Generate the QR code
+            flash("Data must be 34 characters or fewer!", "error")
+        
+        if version:
+            qr_code_url = f"data:image/png;base64,{generate_qr(data, version, fg_color, bg_color)}"
 
     return render_template('webui/index.html', qr_code_url=qr_code_url)
 
@@ -56,7 +61,7 @@ def generate_qr(data, version, fg_color, bg_color):
     print(''.join(str(b) for b in encoded_data + error_correction_codewords))
 
     base_matrix = matrix.create_matrix(matrix_size, matrix_size)
-    base_matrix = matrix.reserve_matrix(base_matrix)
+    base_matrix = matrix.reserve_matrix(base_matrix, version=version)
     save_stage_image(base_matrix, "stage1_reserved.png")
 
     base_matrix = matrix.add_data(base_matrix, encoded_data, error_correction_codewords)
@@ -74,7 +79,7 @@ def generate_qr(data, version, fg_color, bg_color):
 
     for mask_id in range(8):
         mask_fn = matrix.get_mask_function(mask_id)
-        masked_matrix = matrix.apply_mask(base_matrix, mask_fn)
+        masked_matrix = matrix.apply_mask(base_matrix, mask_fn, version=version)
 
         print(f"Applying mask ID {mask_id}...")
         score = matrix.calculate_penalty(masked_matrix)
