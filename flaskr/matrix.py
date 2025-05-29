@@ -95,7 +95,6 @@ def add_timing_patterns(matrix):
 def add_alignment_patterns(matrix, version):
     if version < 2:
         return matrix
-    
     finder_pattern = [
         [1, 1, 1, 1, 1],
         [1, 0, 0, 0, 1],
@@ -145,6 +144,7 @@ def should_mask(i, j, rows, cols, version):
         return False
     if version == 2 and (i >= rows - 8) and (i <= rows - 4) and (j >= cols -8) and (j <= cols - 4):
         return False
+    
     return True
 
 def penalty_rule1(matrix):
@@ -260,33 +260,34 @@ def get_format_bits(mask_id):
 
 
 def add_format_information(matrix, mask_id=0):
+    # ECC Level: L (01), Mask: 000
+    # Final masked format bits: 111011111000100
     format_bits = get_format_bits(mask_id)
     size = len(matrix)
 
-    # Top-left format info (horizontal)
+    # Horizontal format info (top-left)
     for i in range(6):
         matrix[8][i] = format_bits[i]
     matrix[8][7] = format_bits[6]
     matrix[8][8] = format_bits[7]
     matrix[7][8] = format_bits[8]
 
-    # Top-left format info (vertical)
+    # Vertical format info (top-left)
     for i in range(6):
         matrix[i][8] = format_bits[14 - i]
 
-    # Top-right format info (horizontal)
+    # Top-right horizontal
     for i in range(8):
         matrix[8][size - 1 - i] = format_bits[i]
 
-    # Bottom-left format info (vertical)
+    # Bottom-left vertical
     for i in range(7):
         matrix[size - 1 - i][8] = format_bits[8 + i]
 
-    # Dark module (always set in QR standard)
+    # Dark module
     matrix[size - 8][8] = 1
 
     return matrix
-
 
 
 
@@ -311,14 +312,7 @@ def add_data(matrix, data, ecc):
     idx = 0
 
     def is_reserved(i, j):
-        print(f'Reserved matrix: {matrix[i][j]}')
-        if matrix[i][j] in (2, 3):
-            return True
-        elif i == 8 or j == 8:
-            return True
-        elif 16 <= i <= 20 and 16 <= j <= 20:
-            return True
-        return False
+        return matrix[i][j] in (2, 3)
 
     j = size - 1
     upward = True

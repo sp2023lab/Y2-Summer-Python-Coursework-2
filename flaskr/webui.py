@@ -128,7 +128,7 @@ def generate_qr(data, version, fg_color, bg_color):
 
     bg_rgb = tuple(int(bg_color[i:i+2], 16) for i in (1, 3, 5))
     fg_rgb = tuple(int(fg_color[i:i+2], 16) for i in (1, 3, 5))
-    
+
     img = Image.new('RGB', (matrix_size, matrix_size), bg_rgb)
 
 
