@@ -59,9 +59,28 @@ def add_separators(matrix):
             if (row == 7 and (col < 8 or col >= cols - 8)) or (col == 7 and (row < 8 or row >= rows - 8)) or (row == rows - 8 and (col < 8)) or (col == cols - 8 and (row < 8)):
                 matrix[row][col] = 0
 
-    
+    return matrix
+
+def add_version_information(matrix, version):
+    if version < 7:
+        return matrix  # Only needed from version 7+, but we’ll still add this for completeness
+
+    # Calculate the 18-bit version information string
+    # For version 7+, this would involve BCH encoding. For version 2 (optional), we fake the area
+    # Just mark reserved bits here for now to avoid interfering with format area
+
+    # Top-right version info area (below top-right finder)
+    for i in range(6):
+        for j in range(3):
+            matrix[i][-(j+1)] = 2  # Mark as reserved
+
+    # Bottom-left version info area (left of bottom-left finder)
+    for i in range(3):
+        for j in range(6):
+            matrix[-(i+1)][j] = 2  # Mark as reserved
 
     return matrix
+
 
 def add_timing_patterns(matrix):
     rows = len(matrix)
@@ -76,6 +95,7 @@ def add_timing_patterns(matrix):
 def add_alignment_patterns(matrix, version):
     if version < 2:
         return matrix
+    
     finder_pattern = [
         [1, 1, 1, 1, 1],
         [1, 0, 0, 0, 1],
@@ -125,7 +145,6 @@ def should_mask(i, j, rows, cols, version):
         return False
     if version == 2 and (i >= rows - 8) and (i <= rows - 4) and (j >= cols -8) and (j <= cols - 4):
         return False
-    
     return True
 
 def penalty_rule1(matrix):
@@ -157,7 +176,7 @@ def penalty_rule1(matrix):
             penalty += 3 + (count - 5)
 
             
-    print(f'1st penalty: {penalty}')
+    #print(f'1st penalty: {penalty}')
     return penalty
 
 def penalty_rule2(matrix):
@@ -169,7 +188,7 @@ def penalty_rule2(matrix):
             if matrix[i][j] == matrix[i][j+1] == matrix[i+1][j] == matrix[i+1][j+1]:
                 penalty += 3
 
-    print(f'2nd penalty: {penalty}')
+    #print(f'2nd penalty: {penalty}')
     return penalty
 
 def penalty_rule3(matrix):
@@ -191,7 +210,7 @@ def penalty_rule3(matrix):
                 if (i >= 4 and row[i-4:i] == [0, 0, 0, 0]) or (i+11 <= size and row[i+7:i+11] == [0, 0, 0, 0]):
                     penalty += 40
 
-    print(f'3rd penalty: {penalty}')
+    #print(f'3rd penalty: {penalty}')
     return penalty
 
 def penalty_rule4(matrix):
@@ -200,12 +219,12 @@ def penalty_rule4(matrix):
     ratio = dark / total * 100
     k = abs(ratio - 50) // 5
 
-    print(f'4th penalty: {int(k) * 10}')
+    #print(f'4th penalty: {int(k) * 10}')
     return int(k) * 10
 
 
 def calculate_penalty(matrix):
-    print(f'Total penalties are: {penalty_rule1(matrix) + penalty_rule2(matrix) + penalty_rule3(matrix) + penalty_rule4(matrix)}')
+    #print(f'Total penalties are: {penalty_rule1(matrix) + penalty_rule2(matrix) + penalty_rule3(matrix) + penalty_rule4(matrix)}')
     return (
         penalty_rule1(matrix) +
         penalty_rule2(matrix) +
@@ -213,35 +232,61 @@ def calculate_penalty(matrix):
         penalty_rule4(matrix)
     )
 
+
+def get_format_bits(mask_id):
+    # Format info: ECC level L (01) + 3-bit mask pattern
+    format_str = f"01{mask_id:03b}"  # Example: '010000' for mask 0
+
+    # Convert to integer and append 10 zero bits for BCH
+    data = int(format_str, 2) << 10  # Left-shift 10 bits
+
+    # Generator polynomial for BCH (binary: 10100110111)
+    G = 0b10100110111
+
+    # Perform modulo-2 division (BCH remainder calculation)
+    for i in range(14, 9, -1):
+        if (data >> i) & 1:
+            data ^= G << (i - 10)
+
+    # Combine format bits and remainder (5 bits)
+    raw_format = (int(format_str, 2) << 10) | data
+
+    # Apply fixed format mask pattern
+    masked_format = raw_format ^ 0b101010000010010
+
+    # Return as list of 15 bits
+    return [(masked_format >> i) & 1 for i in range(14, -1, -1)]
+
+
+
 def add_format_information(matrix, mask_id=0):
-    # ECC Level: L (01), Mask: 000
-    # Final masked format bits: 111011111000100
-    format_bits = [1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0]
+    format_bits = get_format_bits(mask_id)
     size = len(matrix)
 
-    # Horizontal format info (top-left)
+    # Top-left format info (horizontal)
     for i in range(6):
         matrix[8][i] = format_bits[i]
     matrix[8][7] = format_bits[6]
     matrix[8][8] = format_bits[7]
     matrix[7][8] = format_bits[8]
 
-    # Vertical format info (top-left)
+    # Top-left format info (vertical)
     for i in range(6):
         matrix[i][8] = format_bits[14 - i]
 
-    # Top-right horizontal
+    # Top-right format info (horizontal)
     for i in range(8):
         matrix[8][size - 1 - i] = format_bits[i]
 
-    # Bottom-left vertical
+    # Bottom-left format info (vertical)
     for i in range(7):
         matrix[size - 1 - i][8] = format_bits[8 + i]
 
-    # Dark module
+    # Dark module (always set in QR standard)
     matrix[size - 8][8] = 1
 
     return matrix
+
 
 
 
@@ -266,7 +311,14 @@ def add_data(matrix, data, ecc):
     idx = 0
 
     def is_reserved(i, j):
-        return matrix[i][j] in (2, 3)
+        print(f'Reserved matrix: {matrix[i][j]}')
+        if matrix[i][j] in (2, 3):
+            return True
+        elif i == 8 or j == 8:
+            return True
+        elif 16 <= i <= 20 and 16 <= j <= 20:
+            return True
+        return False
 
     j = size - 1
     upward = True

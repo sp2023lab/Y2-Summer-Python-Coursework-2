@@ -54,9 +54,21 @@ def generate_qr(data, version, fg_color, bg_color):
         raise ValueError(f"Data exceeds limit for QR version {version}")
 
     encoded_data = encode.byte_mode_encode(data, version)
+
+    print("==== DEBUG: DATA ENCODING ====")
+    print(f"Raw input: {data}")
+    print(f"QR Version: {version}")
+    print(f"Encoded bit length: {len(encoded_data)} bits")
+    print(f"Expected (Version {version}): {'152' if version == 1 else '272'} bits")
+    print('Encoded bits:', ''.join(str(b) for b in encoded_data))
+
     img_str = None
 
     error_correction_codewords = errorcorrection.reed_solomon_encode(encoded_data, f'{ecc_level}{version}')
+
+    print("==== DEBUG: ECC ====")
+    print(f"ECC bits ({len(error_correction_codewords)}):", ''.join(str(b) for b in error_correction_codewords))
+    print(f"Total final bitstream: {len(encoded_data) + len(error_correction_codewords)} bits")
 
     print(''.join(str(b) for b in encoded_data + error_correction_codewords))
 
@@ -69,6 +81,7 @@ def generate_qr(data, version, fg_color, bg_color):
     base_matrix = matrix.add_separators(base_matrix)
     base_matrix = matrix.add_timing_patterns(base_matrix)
     base_matrix = matrix.add_alignment_patterns(base_matrix, version=version)
+    base_matrix = matrix.add_version_information(base_matrix, version)
     save_stage_image(base_matrix, "stage2_patterns_data.png")
 
     # --------- Apply All Masks & Select Best One ---------
@@ -98,6 +111,9 @@ def generate_qr(data, version, fg_color, bg_color):
     # Add format info using best_mask_id
     final_matrix = matrix.add_format_information(best_matrix, best_mask_id)
 
+    print("==== DEBUG: MASK ====")
+    print(f"Best mask selected: {best_mask_id}")
+
     # --------- Clean matrix of debug values ---------
     for row in range(len(final_matrix)):
         for col in range(len(final_matrix[0])):
@@ -112,7 +128,7 @@ def generate_qr(data, version, fg_color, bg_color):
 
     bg_rgb = tuple(int(bg_color[i:i+2], 16) for i in (1, 3, 5))
     fg_rgb = tuple(int(fg_color[i:i+2], 16) for i in (1, 3, 5))
-
+    
     img = Image.new('RGB', (matrix_size, matrix_size), bg_rgb)
 
 
