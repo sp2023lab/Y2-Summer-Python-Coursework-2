@@ -17,7 +17,7 @@ def reserve_matrix(matrix, version):
                 matrix[i][j] = 2
             elif (i == 6) or (j == 6):
                 matrix[i][j] = 3
-            elif version == 2 and ((i >= rows - 8) and (i <= rows - 4) and (j >= cols -8) and (j <= cols - 4)):
+            elif version == 2 and ((i >= rows - 9) and (i <= rows - 5) and (j >= cols -9) and (j <= cols - 5)):
                 matrix[i][j] = 3
 
     return matrix
@@ -106,7 +106,7 @@ def add_alignment_patterns(matrix, version):
     # Bottom-right corner
     for i in range(5):
         for j in range(5):
-            matrix[-(i + 4)][j - 8] = finder_pattern[i][j]
+            matrix[-(i + 5)][j - 9] = finder_pattern[i][j]
 
     return matrix
 
@@ -142,7 +142,7 @@ def should_mask(i, j, rows, cols, version):
         return False
     if i == 6 or j == 6:
         return False
-    if version == 2 and (i >= rows - 8) and (i <= rows - 4) and (j >= cols -8) and (j <= cols - 4):
+    if version == 2 and (i >= rows - 9) and (i <= rows - 5) and (j >= cols -9) and (j <= cols - 5):
         return False
     
     return True
@@ -316,6 +316,8 @@ def add_data(matrix, data, ecc):
 
     j = size - 1
     upward = True
+    
+    print(f'Number of bits: {len(bits)}')
 
     while j > 0:
         if j == 6:
@@ -328,6 +330,9 @@ def add_data(matrix, data, ecc):
                     if idx < len(bits):
                         matrix[i][col] = bits[idx]
                         idx += 1
+                        print(f'{i = }, {col = }, {idx = }')
+                    else:
+                        print("Data bits exhausted before filling matrix.")
         j -= 2
         upward = not upward
 

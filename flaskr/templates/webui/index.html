@@ -21,24 +21,28 @@
     </form>
     
     {% if qr_code_url %}
-        <h3>Generated QR Code:</h3>
-        <img src="{{ qr_code_url }}" alt="Final QR Code">
+    <h3>Step-by-Step Construction:</h3>
 
-        <h3>Step-by-Step Construction:</h3>
+    <div id="slideshow" style="width:300px; height:300px;">
+    <img id="slide" src="{{ url_for('static', filename='stage1_reserved.png') }}" width="300" height="300">
+    </div>
 
-        <div>
-            <p><strong>Stage 1: Reserved Matrix</strong></p>
-            <img src="{{ url_for('static', filename='stage1_reserved.png') }}" alt="Reserved Matrix">
+    <script>
+    const images = [
+        "{{ url_for('static', filename='stage1_reserved.png') }}",
+        "{{ url_for('static', filename='stage2_patterns_data.png') }}",
+        "{{ url_for('static', filename='stage3_masked.png') }}",
+        "{{ url_for('static', filename='stage4_final.png') }}"
+    ];
+    
+    let index = 0;
+    const imgElement = document.getElementById("slide");
 
-            <p><strong>Stage 2: With Data + Patterns</strong></p>
-            <img src="{{ url_for('static', filename='stage2_patterns_data.png') }}" alt="Patterns and Data">
-
-            <p><strong>Stage 3: After Masking</strong></p>
-            <img src="{{ url_for('static', filename='stage3_masked.png') }}" alt="Masked Matrix">
-
-            <p><strong>Stage 4: Final with Format Info</strong></p>
-            <img src="{{ url_for('static', filename='stage4_final.png') }}" alt="Final Matrix with Format">
-        </div>
+    setInterval(() => {
+        index = (index + 1) % images.length;
+        imgElement.src = images[index];
+    }, 2000); // 2 seconds per image
+    </script>
     {% endif %}
 
 {% endblock %}
