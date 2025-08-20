@@ -53,16 +53,12 @@ Our application includes several features that make it suitable for real-world u
 To test the qr code generator, the input string ‘known’ was also used. This was byte agreement and the system indeed interpreted it to be in byte mode as it had the mode bits 0100 and the character count bits to encode the size of a string of characters 5 characters. This data was then Reed-Solomon encoded at level L, thus producing 19 data and 7 ECC codewords. These were arranged in a 21×21 matrix following the QR Version 1 stipulations, with finder patterns, timing patterns, format information, and the Mask Pattern 0 applied. The console output confirmed each intermediate operation of that process from the data encoded to the masking was working, and the final QR code was scannable by a standard mobile reader. For longer inputs, the system automatically switched to Version 2, which uses a 25×25 matrix layout.
 
 Stage 1: Reserved Matrix
-[Output 1](./Version 2/static/stage1_reserved.png)
 	
 Stage 2: With Data and Patterns
-[Output 2](./Version 2/static/stage2_patterns_data.png)
 	
 Stage 3: After Masking
-[Output 3](./Version 2/static/stage3_masked.png)
 	
 Stage 4: Final QR Code (with Format Info)
-[Output 4](./Version 2/static/stage4_final.png)
 
 The QR is successfully scanned using a mobile phone QR reader.
 
