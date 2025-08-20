@@ -1,105 +1,83 @@
-HEAD
-# pythonerrors
+## This is the gitlab repo for the CS2PP QR code project.
 
-# Python Coursework
-fee6fa1 (Initial commit)
+#### a) Application Overview &amp; Instructions
 
+The files are split into 2 folders. The version 1 folder contains the files responsible for the original program which only has version 1 functionality. The version 2 folder contains the modified files which adds the project enhancements, as well as version 2 functionality.
 
-
-## Getting started
-
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+To use the the program you need to enter one of the folders and open a command prompt/terminal in that folder. Make sure to install flask and then run the following command:
 
 ```
-cd existing_repo
-<<<<<<< HEAD
-git remote add origin https://csgitlab.reading.ac.uk/uq010160/pythonerrors.git
-=======
-git remote add origin https://csgitlab.reading.ac.uk/uq010160/python-coursework.git
->>>>>>> fee6fa1 (Initial commit)
-git branch -M main
-git push -uf origin main
+flask --app QR run
+```
+You then need to head over to a browser and open this webpage:
+```
+http://localhost:5000
 ```
 
-## Integrate with your tools
+The version 1 program has limited functionality, It creates a version 1 QR code from a string and that's it. The version 2 program can also generate version 2 QR codes by dynamically selecting the required QR version for the input text. There are also options to change the background colour and the data colour of the QR code. The program is divided into modules to handle byte encoding, error correction, matrix generation and styling.
 
-<<<<<<< HEAD
-- [ ] [Set up project integrations](https://csgitlab.reading.ac.uk/uq010160/pythonerrors/-/settings/integrations)
-=======
-- [ ] [Set up project integrations](https://csgitlab.reading.ac.uk/uq010160/python-coursework/-/settings/integrations)
->>>>>>> fee6fa1 (Initial commit)
 
-## Collaborate with your team
+#### b) Programming Paradigms Used
+Visual representation of the program is shown bellow: Programming Paradigms Used The application is implemented using several programming paradigms. The control of application flow and data processing is managed through imperative programming. These tools are exploited especially in the `matrix.py` module, where functional programming paradigms like lambda functions and list comprehensions allow for quick and clean data manipulations.
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
 
-## Test and Deploy
+#### c) Social, Legal, Ethical Considerations
+The web interface will be accessible across multiple devices and simple enough to be used by anyone with minimal barriers, allowing users of all backgrounds equal access to the program object-oriented programming is demonstrated by encapsulating each task in separate files, e.g. `encode.py` and `errorcorrection.py`, and the modular file structure. A note of the legal implications of QR codes, such as phishing or malicious links, is also integrated into the user interface as a disclaimer. It is also morally ethical as there is no data harvesting or storage and uses input constraints to protect against inappropriate or harmful usage. Again, this is in line with privacy, transparency and safety.
 
-Use the built-in continuous integration in GitLab.
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+#### d) Known Flaws or Limitations
+The system only uses Mask Pattern 0; the system does not automatically decide which is the best mask pattern to use. There is very little input sanitation for special characters, and no more advanced error messaging for unacceptable or unscannable output. This is something that can be explored in future iterations.
 
-***
 
-# Editing this README
+#### e) Data Handling &amp; Integrity
+Input to the user is via Flask form submission, where simple validation ensures that no string is empty nor over the character length that the inputs are limited to. Usability is increased by providing feedback via Flask’s flash messages. The app functions entirely in memory, never sharing or writing any user data to disk or to another location where it might be viewable.
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
 
-## Suggestions for a good README
+#### f) Real world application features:
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+Our application includes several features that make it suitable for real-world use in domains such as marketing, inventory management, education, and scientific tracking:
 
-## Name
-Choose a self-explaining name for your project.
+•	Automatic Version Selection: The system adjusts between Version 1 and Version 2 QR codes based on data length, ensuring efficient use of space while maintaining scannability.
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+•	Reed-Solomon Error Correction: Robust ECC integration (Level L) allows the QR codes to remain scannable even with partial damage or distortion, which is essential in physical environments like shipping labels and advertisements.
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+•	Customisation Options: Users can change foreground and background colours, allowing businesses to align QR codes with branding or enhance visibility on different surfaces.
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+•	Step-by-Step Visualisation: The interface shows QR construction stages, making it ideal for educational use in teaching how QR encoding and masking work.
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+•	Web-Based Interface: The Flask application can be deployed as a cloud tool or integrated into internal systems (e.g., warehouse inventory tools) for on-demand QR generation.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+#### g) Intermediate Proof of Functionality (Test String: known):
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+To test the qr code generator, the input string ‘known’ was also used. This was byte agreement and the system indeed interpreted it to be in byte mode as it had the mode bits 0100 and the character count bits to encode the size of a string of characters 5 characters. This data was then Reed-Solomon encoded at level L, thus producing 19 data and 7 ECC codewords. These were arranged in a 21×21 matrix following the QR Version 1 stipulations, with finder patterns, timing patterns, format information, and the Mask Pattern 0 applied. The console output confirmed each intermediate operation of that process from the data encoded to the masking was working, and the final QR code was scannable by a standard mobile reader. For longer inputs, the system automatically switched to Version 2, which uses a 25×25 matrix layout.
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+Stage 1: Reserved Matrix
+[Output 1](./Version 2/static/stage1_reserved.png)
+	
+Stage 2: With Data and Patterns
+[Output 2](./Version 2/static/stage2_patterns_data.png)
+	
+Stage 3: After Masking
+[Output 3](./Version 2/static/stage3_masked.png)
+	
+Stage 4: Final QR Code (with Format Info)
+[Output 4](./Version 2/static/stage4_final.png)
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+The QR is successfully scanned using a mobile phone QR reader.
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+#### h) Screen-capture Animation:
 
-## License
-For open source projects, say how it is licensed.
+[Output Video](./Screen_Recording_2025-05-29_222850_1_.gif)
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+
+#### References
+Thonky- https://www.thonky.com/qr-code-tutorial/
+
+Flask Documentation- https://flask.palletsprojects.com/en/stable/
+
+
+#### Extra notes:
+
+This was a group project
