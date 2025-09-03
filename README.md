@@ -2,7 +2,7 @@
 
 #### a) Application Overview &amp; Instructions
 
-The files are split into 2 folders. The version 1 folder contains the files responsible for the original program which only has version 1 functionality. The version 2 folder contains the modified files which adds the project enhancements, as well as version 2 functionality.
+The flaskr folder contains the files which has the Version 1 and Version 2 additions (containing customization, masking, version 2), as well as the functionality.
 
 To use the the program you need to enter one of the folders and open a command prompt/terminal in that folder. Make sure to install flask and then run the following command:
 
@@ -14,7 +14,7 @@ You then need to head over to a browser and open this webpage:
 http://localhost:5000
 ```
 
-The version 1 program has limited functionality, It creates a version 1 QR code from a string and that's it. The version 2 program can also generate version 2 QR codes by dynamically selecting the required QR version for the input text. There are also options to change the background colour and the data colour of the QR code. The program is divided into modules to handle byte encoding, error correction, matrix generation and styling.
+The code can also generate version 2 QR codes by dynamically selecting the required QR version for the input text. There are also options to change the background colour and the data colour of the QR code. The program is divided into modules to handle byte encoding, error correction, matrix generation and styling.
 
 
 #### b) Programming Paradigms Used
